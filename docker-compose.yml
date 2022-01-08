@@ -1,0 +1,13 @@
+version: "3.8"
+services:
+  frontend:
+    build:
+      context: ./frontend/
+    volumes:
+      - ./frontend/components:/app/components
+      - ./frontend/pages:/app/pages
+      - ./frontend/public:/app/public
+      - ./frontend/styles:/app/styles
+    ports:
+      - '3000:3000'
+    command: [ 'yarn', 'run', 'dev' ]
