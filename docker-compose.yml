@@ -8,6 +8,17 @@ services:
       - ./frontend/pages:/app/pages
       - ./frontend/public:/app/public
       - ./frontend/styles:/app/styles
+      - ./frontend/types.d.ts:/app/types.d.ts
     ports:
       - '3000:3000'
     command: [ 'yarn', 'run', 'dev' ]
+  api:
+    build:
+      context: ./api/
+    volumes:
+      - ./api:/app/
+    ports:
+      - '8000:8000'
+    environment:
+      - PORT=8000
+    command: [ 'go', 'run', 'server.go' ]
