@@ -22,3 +22,14 @@ services:
     environment:
       - PORT=8000
     command: [ 'go', 'run', 'server.go' ]
+  db:
+    image: 'postgres:13-alpine'
+    environment:
+      - POSTGRES_DB=rockapi
+    env_file:
+      - ./.secrets
+    volumes:
+      - api_db_data:/var/lib/postgresql/data
+volumes:
+  api_db_data:
+    driver: local
