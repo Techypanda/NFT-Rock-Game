@@ -21,6 +21,13 @@ services:
       - '8000:8000'
     environment:
       - PORT=8000
+      - DBHOST=db
+      - DBUSER=postgres
+      - DBPASSWORD=PASSWORDISNOTINPRODUCTION123
+      - DBNAME=rockapi
+      - DBPORT=5432
+      - DBSSL=FALSE
+      - ORIGINS=http://localhost:3000,localhost:8000
     command: [ 'go', 'run', 'server.go' ]
   db:
     image: 'postgres:13-alpine'
