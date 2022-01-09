@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"net/mail"
 
+	"time"
+
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -14,6 +17,8 @@ import (
 	"techytechster.com/rockapi/models"
 )
 
+var SessionSecret string
+
 type RegisterUserPayload struct {
 	Username        *string `json:"username" form:"username" query:"username"`
 	Email           *string `json:"email" form:"email" query:"email"`
@@ -21,8 +26,13 @@ type RegisterUserPayload struct {
 	ConfirmPassword *string `json:"confirmpassword" form:"confirmpassword" query:"confirmpassword"`
 }
 type LoginPayload struct {
-	Identity *string `json:"identity" form:"identity" query:"identity"`
-	Password *string `json:"password" form:"password" query:"password"`
+	Identity   *string `json:"identity" form:"identity" query:"identity"`
+	Password   *string `json:"password" form:"password" query:"password"`
+	RememberMe bool    `json:"rememberme" form:"rememberme" query:"rememberme"`
+}
+type TokenClaims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
 }
 
 func UserRoutes(e *echo.Echo) {
@@ -30,16 +40,32 @@ func UserRoutes(e *echo.Echo) {
 	log.Println("🚀 /api/v1/login - POST - Login As User")
 	log.Println("🚀 /api/v1/logout - GET - Logout As User")
 	log.Println("🚀 /api/v1/loggedin - GET - Check If Logged In")
-	log.Println("🔒 /api/v1/user - GET - See My Details")
 	e.POST("/api/v1/user", registerUser())
 	e.POST("/api/v1/login", loginUser())
 	e.GET("/api/v1/loggedin", checkLogin())
 	e.GET("/api/v1/logout", logout())
 }
 
+func PrivateUserRoutes(e *echo.Group) {
+	log.Println("🔒 /api/v1/user - GET - See My Details")
+	e.GET("/api/v1/user", myDetails())
+}
+
 func checkHash(password string, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func myDetails() echo.HandlerFunc {
+	return func(c echo.Context) error {
+		u := models.User{}
+		user := c.Get("user").(*jwt.Token)
+		username := user.Claims.(*TokenClaims).Username
+		db.Where("username ILIKE ? OR email ILIKE ?", username, username).First(&u)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"username": u.Username,
+		})
+	}
 }
 
 func checkLogin() echo.HandlerFunc {
@@ -83,6 +109,21 @@ func logout() echo.HandlerFunc {
 	}
 }
 
+func constructToken(username string) (string, error) {
+	claims := &TokenClaims{
+		username,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	t, err := token.SignedString([]byte(SessionSecret))
+	if err != nil {
+		return "", err
+	}
+	return t, err
+}
+
 func loginUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		payload := new(LoginPayload)
@@ -109,21 +150,33 @@ func loginUser() echo.HandlerFunc {
 			})
 		}
 		if checkHash(*payload.Password, user.Password) {
-			sess, _ := session.Get("session", c)
-			sess.Options = &sessions.Options{
-				Path:     "/",
-				MaxAge:   86400 * 7,
-				HttpOnly: true,
-				Secure:   false,
+			if payload.RememberMe {
+				sess, _ := session.Get("session", c)
+				sess.Options = &sessions.Options{
+					Path:     "/",
+					MaxAge:   86400 * 7,
+					HttpOnly: true,
+					Secure:   false,
+				}
+				sess.Values["username"] = user.Username
+				sess.Save(c.Request(), c.Response())
+				return c.JSON(http.StatusOK, map[string]interface{}{
+					"success": true,
+				})
+			} else {
+				token, terr := constructToken(user.Username)
+				if terr != nil {
+					return c.JSON(http.StatusOK, map[string]interface{}{
+						"error": terr.Error(),
+					})
+				}
+				return c.JSON(http.StatusOK, map[string]interface{}{
+					"token": token,
+				})
 			}
-			sess.Values["username"] = user.Username
-			sess.Save(c.Request(), c.Response())
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"success": true,
-			})
 		} else {
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"success": false,
+			return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+				"error": "bad password/identity",
 			})
 		}
 	}

@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"techytechster.com/rockapi/controllers"
 )
 
@@ -29,23 +30,24 @@ func generateSecret(s int) (string, error) {
 }
 
 func main() {
+	var err error
 	e := echo.New()
 	e.Use(controllers.RockAPICors())
-	sessionSecret, err := generateSecret(128)
-	e.Use(session.Middleware(sessions.NewCookieStore([]byte(sessionSecret))))
+	controllers.SessionSecret, err = generateSecret(128)
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte(controllers.SessionSecret))))
+	restricted := e.Group("")
+	restricted.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey: []byte(controllers.SessionSecret),
+		Claims:     &controllers.TokenClaims{},
+	}))
 	// Routes
 	controllers.UserRoutes(e)
-
-	// e.GET("/", func(c echo.Context) error {
-	// 	return c.JSON(http.StatusOK, map[string]string{
-	// 		"hb": "i am sentient",
-	// 	})
-	// })
+	controllers.PrivateUserRoutes(restricted)
 	// Initialization
 	if err != nil {
 		log.Println("Failed To Generate A Secret For Sessions: ", err.Error())
 	} else {
-		log.Println("Generated Secret For Sessions: ", sessionSecret)
+		log.Println("Generated Secret For Sessions: ", controllers.SessionSecret)
 		if err = controllers.InitializeDatabase(); err != nil {
 			log.Printf("Failed to setup database: %s\n", err.Error())
 		} else {
