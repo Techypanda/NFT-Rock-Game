@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/gorilla/sessions"
@@ -32,7 +33,12 @@ func generateSecret(s int) (string, error) {
 func main() {
 	var err error
 	e := echo.New()
-	e.Use(controllers.RockAPICors())
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     []string{"http://localhost:3000", "http://localhost:8000", "http://localhost"},
+		AllowMethods:     []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete},
+		AllowCredentials: true,
+	}))
+	// e.Use(controllers.RockAPICors())
 	controllers.SessionSecret, err = generateSecret(128)
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(controllers.SessionSecret))))
 	restricted := e.Group("")

@@ -4,13 +4,20 @@ services:
     build:
       context: ./frontend/
     volumes:
-      - ./frontend/components:/app/components
-      - ./frontend/pages:/app/pages
-      - ./frontend/public:/app/public
-      - ./frontend/styles:/app/styles
-      - ./frontend/types.d.ts:/app/types.d.ts
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+      # - ./frontend/components:/app/components
+      # - ./frontend/pages:/app/pages
+      # - ./frontend/public:/app/public
+      # - ./frontend/styles:/app/styles
+      # - ./frontend/types.d.ts:/app/types.d.ts
+      # - ./frontend/api:/app/api
     ports:
       - '3000:3000'
+      - '49153:49153'
+    environment:
+      - NEXT_PUBLIC_BASE_API_URL=http://localhost:8000/
     command: [ 'yarn', 'run', 'dev' ]
   api:
     build:
