@@ -11,3 +11,19 @@ export async function loginUser(username: string, password: string, rememberme: 
     identity: username, password, rememberme
   })
 }
+
+export function saveTokens(accessToken: string, refreshToken: string) {
+  sessionStorage.setItem("access", accessToken)
+  sessionStorage.setItem("refresh", refreshToken)
+}
+
+export function getTokens(): TokenPair {
+  const accessToken = sessionStorage.getItem("access")
+  const refreshToken = sessionStorage.getItem("refresh")
+  if (!accessToken || !refreshToken) {
+    throw Error("Access Token or Refresh Token is missing")
+  }
+  return {
+    accessToken, refreshToken
+  }
+}

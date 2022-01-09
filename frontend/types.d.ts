@@ -9,3 +9,7 @@ interface Operation {
   endpoint: string;
   type: 'GET' | 'POST' | 'PUT' | 'DELETE';
 }
+interface TokenPair {
+  accessToken: string;
+  refreshToken: string;
+}

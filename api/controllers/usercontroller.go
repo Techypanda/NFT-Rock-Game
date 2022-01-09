@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"net/mail"
 
-	"time"
-
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -109,21 +107,6 @@ func logout() echo.HandlerFunc {
 	}
 }
 
-func constructToken(username string) (string, error) {
-	claims := &TokenClaims{
-		username,
-		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 72).Unix(),
-		},
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte(SessionSecret))
-	if err != nil {
-		return "", err
-	}
-	return t, err
-}
-
 func loginUser() echo.HandlerFunc {
 	return func(c echo.Context) error {
 		payload := new(LoginPayload)
@@ -164,14 +147,15 @@ func loginUser() echo.HandlerFunc {
 					"success": true,
 				})
 			} else {
-				token, terr := constructToken(user.Username)
+				accessToken, refreshToken, terr := TokenPair(user.Username)
 				if terr != nil {
 					return c.JSON(http.StatusOK, map[string]interface{}{
 						"error": terr.Error(),
 					})
 				}
 				return c.JSON(http.StatusOK, map[string]interface{}{
-					"token": token,
+					"access":  accessToken,
+					"refresh": refreshToken,
 				})
 			}
 		} else {

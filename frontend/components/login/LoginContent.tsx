@@ -4,7 +4,7 @@ import { AxiosError } from "axios";
 import { motion, useAnimation, Variants } from "framer-motion";
 import { useRouter } from "next/router"
 import { useState } from "react";
-import { loginUser } from "../../api/api";
+import { loginUser, saveTokens } from "../../api/api";
 
 const variants: Variants = {
   error: {
@@ -41,7 +41,10 @@ function LoginContent(props: DefaultProps) {
       try {
         setLoading(true);
         const resp = await loginUser(username, password, rememberMe)
-        alert(resp.data.token)
+        const access = resp.data.access
+        const refresh = resp.data.refresh
+        saveTokens(access, refresh)
+        alert("TODO: Context Update and refresh loop")
       } catch (e) {
         const err = e as AxiosError
         setError(err.response?.data.error)

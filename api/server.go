@@ -40,29 +40,45 @@ func main() {
 	}))
 	// e.Use(controllers.RockAPICors())
 	controllers.SessionSecret, err = generateSecret(128)
+	if err != nil {
+		log.Println("Failed To Generate A Secret For Sessions: ", err.Error())
+		os.Exit(-1)
+	}
+	controllers.AccessTokenSecret, err = generateSecret(128)
+	if err != nil {
+		log.Println("Failed To Generate A Secret For Access Token: ", err.Error())
+		os.Exit(-1)
+	}
+	controllers.RefreshTokenSecret, err = generateSecret(128)
+	if err != nil {
+		log.Println("Failed To Generate A Secret For Refresh Token: ", err.Error())
+		os.Exit(-1)
+	}
 	e.Use(session.Middleware(sessions.NewCookieStore([]byte(controllers.SessionSecret))))
 	restricted := e.Group("")
 	restricted.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		SigningKey: []byte(controllers.SessionSecret),
+		SigningKey: []byte(controllers.AccessTokenSecret),
+		Claims:     &controllers.TokenClaims{},
+	}))
+	refreshRestricted := e.Group("")
+	refreshRestricted.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey: []byte(controllers.RefreshTokenSecret),
 		Claims:     &controllers.TokenClaims{},
 	}))
 	// Routes
 	controllers.UserRoutes(e)
 	controllers.PrivateUserRoutes(restricted)
+	controllers.TokenPrivateRoutes(refreshRestricted)
 	// Initialization
-	if err != nil {
-		log.Println("Failed To Generate A Secret For Sessions: ", err.Error())
+	log.Println("Generated Secret For Sessions: ", controllers.SessionSecret)
+	if err = controllers.InitializeDatabase(); err != nil {
+		log.Printf("Failed to setup database: %s\n", err.Error())
 	} else {
-		log.Println("Generated Secret For Sessions: ", controllers.SessionSecret)
-		if err = controllers.InitializeDatabase(); err != nil {
-			log.Printf("Failed to setup database: %s\n", err.Error())
+		port, exists := os.LookupEnv("PORT")
+		if exists {
+			e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", port)))
 		} else {
-			port, exists := os.LookupEnv("PORT")
-			if exists {
-				e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", port)))
-			} else {
-				e.Logger.Fatal(e.Start(":1323"))
-			}
+			e.Logger.Fatal(e.Start(":1323"))
 		}
 	}
 }
