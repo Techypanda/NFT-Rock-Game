@@ -4,3 +4,4 @@ export type operations =
   | "register"
   | "loggedin"
   | "details"
+  | "refresh"

@@ -2,9 +2,11 @@ import styled from "@emotion/styled";
 import { Menu } from "@mui/icons-material";
 import { AppBar, Box, Button, IconButton, Toolbar, Typography } from '@mui/material'
 import { useRouter } from "next/router";
+import { useAuthStatus } from "../../api/hooks";
 
 function Header(props: DefaultProps) {
   const router = useRouter()
+  const { authenticated } = useAuthStatus()
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
@@ -21,7 +23,9 @@ function Header(props: DefaultProps) {
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Cyber Rock
           </Typography>
-          <Button color="inherit" onClick={() => router.push("/login")}>Login</Button>
+          {!authenticated ?
+            <Button color="inherit" onClick={() => router.push("/login")}>Login</Button> :
+            <></>}
         </Toolbar>
       </AppBar>
     </Box>

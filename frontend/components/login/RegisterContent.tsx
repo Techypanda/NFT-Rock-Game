@@ -1,5 +1,5 @@
 import styled from "@emotion/styled"
-import { Box, Button, Checkbox, FormControlLabel, TextField, Typography } from "@mui/material"
+import { Box, Button, Checkbox, FormControlLabel, TextField, Typography, CircularProgress, Alert } from "@mui/material"
 import { AxiosError } from "axios"
 import { motion, useAnimation, Variants } from "framer-motion"
 import { useRouter } from "next/router"
@@ -34,6 +34,8 @@ function RegisterContent(props: DefaultProps) {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [email, setEmail] = useState("")
   const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   async function handleFormSubmission() {
     if (!username) {
       setError("Username is required")
@@ -49,13 +51,18 @@ function RegisterContent(props: DefaultProps) {
       controls.start("start")
     } else {
       try {
+        setLoading(true);
         const resp = await registerUser(username, password, confirmPassword, email ? email : undefined)
-        alert("Successfully Registered") // TODO: make this a mui dialog
-        router.push("/login")
+        setSuccess(true);
+        window.setTimeout(() => {
+          router.push("/login")
+        }, 1500)
       } catch (e) {
         const err = e as AxiosError
         setError(err.response?.data.error)
         controls.start("start")
+      } finally {
+        setLoading(false);
       }
     }
   }
@@ -76,10 +83,23 @@ function RegisterContent(props: DefaultProps) {
         </Box>
         <Typography variant="body2">While it is unlikely data would get breached, it's always a possibility and this is a 'for fun' application, please acknowledge that you are ok with this possibility (Just use dummy data...)</Typography>
         <FormControlLabel control={<Checkbox defaultChecked />} label="I understand" />
-        <Box mb={error ? 2 : 0}>
-          <Typography align="center" variant="body2" className="error">{error}</Typography>
-        </Box>
+        {error ?
+          <Box mb={error ? 2 : 0}>
+            <Alert severity="error">{error}</Alert>
+          </Box> : <></>
+        }
         <Button sx={{ borderRadius: '30px', padding: '15px' }} variant="contained" fullWidth onClick={() => handleFormSubmission()}>Register</Button>
+        {loading ?
+          <Box display="flex" justifyContent="center" my={2}>
+            <CircularProgress />
+          </Box> : <></>
+        }
+        {success ?
+          <Box my={2}>
+            <Alert severity="success">You have successfully registered a new account</Alert>
+          </Box>
+          : <></>
+        }
       </form>
     </motion.div>
   )

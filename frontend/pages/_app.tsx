@@ -2,11 +2,12 @@ import { AppProps } from 'next/app'
 import Head from 'next/head'
 import Header from '../components/shared/Header'
 import Layout from "../components/shared/Layout"
+import RockContext from '../components/shared/RockContext'
 import '../styles/style.scss'
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <>
+    <RockContext>
       <Head>
         <link
           rel="stylesheet"
@@ -17,7 +18,7 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Layout>
         <Component {...pageProps} />
       </Layout>
-    </>
+    </RockContext>
   )
 }
 

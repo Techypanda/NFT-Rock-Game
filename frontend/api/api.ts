@@ -27,3 +27,11 @@ export function getTokens(): TokenPair {
     accessToken, refreshToken
   }
 }
+
+export async function doRefresh() {
+  const tokens = getTokens()
+  const resp = await requestHandler("refresh", {}, tokens.refreshToken)
+  const access = resp.data.access
+  const refresh = resp.data.refresh
+  saveTokens(access, refresh)
+}

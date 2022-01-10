@@ -5,6 +5,7 @@ import { motion, useAnimation, Variants } from "framer-motion";
 import { useRouter } from "next/router"
 import { useState } from "react";
 import { loginUser, saveTokens } from "../../api/api";
+import { useAuthStatus } from "../../api/hooks";
 
 const variants: Variants = {
   error: {
@@ -23,6 +24,7 @@ const variants: Variants = {
 
 function LoginContent(props: DefaultProps) {
   const controls = useAnimation();
+  const { setAuthenticated } = useAuthStatus()
   const { className } = props
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -44,7 +46,7 @@ function LoginContent(props: DefaultProps) {
         const access = resp.data.access
         const refresh = resp.data.refresh
         saveTokens(access, refresh)
-        alert("TODO: Context Update and refresh loop")
+        setAuthenticated(true)
       } catch (e) {
         const err = e as AxiosError
         setError(err.response?.data.error)

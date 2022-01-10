@@ -18,5 +18,9 @@ export const urls = {
   details: {
     endpoint: 'api/v1/user',
     type: 'GET'
-  }
+  },
+  refresh: {
+    endpoint: 'api/v1/refresh',
+    type: 'POST'
+  },
 }

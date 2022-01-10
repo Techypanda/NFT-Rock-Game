@@ -128,8 +128,8 @@ func loginUser() echo.HandlerFunc {
 		var user models.User
 		res := db.Where("username ILIKE ? OR email ILIKE ?", payload.Identity, payload.Identity).First(&user)
 		if res.Error != nil {
-			return c.JSON(http.StatusOK, map[string]interface{}{
-				"error": res.Error.Error(),
+			return c.JSON(http.StatusBadRequest, map[string]interface{}{
+				"error": "invalid username/password",
 			})
 		}
 		if checkHash(*payload.Password, user.Password) {
@@ -142,10 +142,20 @@ func loginUser() echo.HandlerFunc {
 					Secure:   false,
 				}
 				sess.Values["username"] = user.Username
-				sess.Save(c.Request(), c.Response())
-				return c.JSON(http.StatusOK, map[string]interface{}{
-					"success": true,
+				sess.Save(c.Request(), c.Response()) // TODO: Investigate using sessions & JWT
+				accessToken, refreshToken, terr := TokenPair(user.Username)
+				if terr != nil {
+					return c.JSON(http.StatusOK, map[string]interface{}{
+						"error": terr.Error(),
+					})
+				}
+				return c.JSON(http.StatusOK, map[string]interface{}{ // return access refresh anyway :/
+					"access":  accessToken,
+					"refresh": refreshToken,
 				})
+				// return c.JSON(http.StatusOK, map[string]interface{}{
+				// 	"success": true,
+				// })
 			} else {
 				accessToken, refreshToken, terr := TokenPair(user.Username)
 				if terr != nil {
