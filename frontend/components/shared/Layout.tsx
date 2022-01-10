@@ -1,3 +1,4 @@
+import { Container } from "@mui/material";
 import { motion } from "framer-motion";
 import { useRouter } from "next/router";
 
@@ -20,7 +21,9 @@ function Layout(props: DefaultProps) {
         transition={{ type: 'linear' }}
         key={router.route}
       >
-        {children}
+        <Container>
+          {children}
+        </Container>
       </motion.main>
     </div>
   )

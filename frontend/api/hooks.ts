@@ -7,6 +7,12 @@ export const RContext = createContext({
   setAuthenticated: (state: boolean) => { },
   pageLoading: false,
   setPageLoading: (state: boolean) => { },
+  recieveLoot: false,
+  setRecieveLoot: (state: boolean) => { },
+  money: 0,
+  setMoney: (money: number) => { },
+  moneyPerSecond: 0,
+  setMoneyPerSecond: (moneyPerSecond: number) => { }
 })
 
 export function useAuthStatus() {
@@ -17,4 +23,14 @@ export function useAuthStatus() {
 export function usePageLoader() {
   const { pageLoading, setPageLoading } = useContext(RContext)
   return { pageLoading, setPageLoading }
+}
+
+export function useLoot() {
+  const { recieveLoot, setRecieveLoot } = useContext(RContext);
+  return { recieveLoot, setRecieveLoot }
+}
+
+export function useMoney() {
+  const { money, setMoney, moneyPerSecond, setMoneyPerSecond } = useContext(RContext);
+  return { money, setMoney, moneyPerSecond, setMoneyPerSecond }
 }
